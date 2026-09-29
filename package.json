@@ -1,18 +1,19 @@
 {
   "name": "line-mtc",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Shared aircraft running log and Even G2 companion",
   "main": "index.js",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "test": "playwright test",
-    "pack": "npm run build && evenhub pack app.json dist --sdk-ver 0.0.16 -o platoon-running-log.ehpk",
+    "pack": "npm run build:companion && evenhub pack app.json dist-companion --sdk-ver 0.0.16 -o line-mtc-1.0.2.ehpk",
     "simulator": "node node_modules/@evenrealities/evenhub-simulator/bin/index.js http://localhost:5173 --automation-port 9898",
     "build:server": "tsc -p server/tsconfig.json && cp server/main.mjs server/store.mjs server/init-data.mjs server-build/",
     "start": "node server-build/main.mjs",
     "test:server": "npm run build:server && node --test server/*.test.mjs",
-    "test:shared": "npm run build && npm run build:server && playwright test -c playwright.shared.config.ts"
+    "test:shared": "npm run build && npm run build:server && LINE_MTC_COMPANION_ORIGIN=http://127.0.0.1:3077 npm run build:companion && playwright test -c playwright.shared.config.ts",
+    "build:companion": "tsc --noEmit && vite build --mode companion --outDir dist-companion"
   },
   "keywords": [],
   "author": "",

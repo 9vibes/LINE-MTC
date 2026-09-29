@@ -33,3 +33,24 @@ test('authentication, real-time updates, concurrency, permissions and restart pe
   await request('/api/logout','POST',{},admin);assert.equal((await request('/api/state','GET',null,admin)).status,401);
  }finally{events?.abort();await app.close();rmSync(dir,{recursive:true,force:true});}
 });
+
+test('packaged companion uses bearer auth, CORS and live events without accepting cookies',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'line-mtc-mobile-'));
+ const app=startServer({port:0,dbPath:join(dir,'test.sqlite'),password,origin:'https://mtc.kunas.pro'});
+ await once(app.server,'listening');const url=`http://127.0.0.1:${app.server.address().port}`;const abort=new AbortController();
+ const request=(path,method='GET',data,token)=>fetch(url+path,{method,headers:{Origin:'null','Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:data?JSON.stringify(data):undefined});
+ try{
+  const preflight=await request('/api/mobile/state','OPTIONS');assert.equal(preflight.status,204);assert.equal(preflight.headers.get('access-control-allow-origin'),'*');assert.match(preflight.headers.get('access-control-allow-headers'),/Authorization/);assert.equal(preflight.headers.get('access-control-allow-credentials'),null);
+  assert.equal((await request('/api/mobile/config')).status,200);
+  assert.equal((await request('/api/mobile/state')).status,401);
+  const login=await request('/api/mobile/login','POST',{username:'operator',password});assert.equal(login.status,200);assert.equal(login.headers.get('set-cookie'),null);const {token}=await login.json();assert.match(token,/^[a-f0-9]{64}$/);
+  assert.equal((await fetch(url+'/api/mobile/state',{headers:{Cookie:`line_mtc_session=${token}`}})).status,401);
+  assert.equal((await request('/api/state','GET',null,token)).status,401);
+  assert.equal((await request('/api/mobile/session','GET',null,token)).status,200);
+  const stream=await fetch(url+'/api/mobile/events',{headers:{Authorization:`Bearer ${token}`,Origin:'null'},signal:abort.signal});assert.equal(stream.headers.get('access-control-allow-origin'),'*');const reader=stream.body.getReader();await reader.read();
+  assert.equal((await request('/api/mobile/state','PUT',{revision:0,aircraft:[aircraft]},token)).status,200);assert.match(new TextDecoder().decode((await reader.read()).value),/3074/);
+  assert.equal((await request('/api/mobile/state','PUT',{revision:0,aircraft:[]},token)).status,409);
+  assert.equal((await request('/api/mobile/logout','POST',{},token)).status,200);
+  assert.equal((await request('/api/mobile/session','GET',null,token)).status,401);
+ }finally{abort.abort();await app.close();rmSync(dir,{recursive:true,force:true});}
+});
