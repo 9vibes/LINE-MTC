@@ -1,0 +1,29 @@
+name: line-mtc
+services:
+  server:
+    build: .
+    image: ghcr.io/9vibes/line-mtc:1.0.0
+    container_name: LINE-MTC
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-28110}:3000"
+    environment:
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://rl.kunas.pro}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:28110}
+      LINE_MTC_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+      TZ: ${TZ:-America/New_York}
+    secrets: [admin_password]
+    volumes: [line-mtc-data:/data]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+secrets:
+  admin_password:
+    file: ./secrets/admin-password
+volumes:
+  line-mtc-data:
