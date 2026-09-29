@@ -97,7 +97,7 @@ if(shared){
  shared.watch(state=>{
   const current=dayItems()[selected];const currentId=current?.id,logId=current?.logs[page]?.id;
   data=state.aircraft;loadError='';
-  const next=dayItems().findIndex(a=>a.id===currentId);if(next>=0){selected=next;page=Math.max(0,dayItems()[next].logs.findIndex(l=>l.id===logId));}else{detail=false;selected=0;page=0;}
+  const next=dayItems().findIndex(a=>a.id===currentId);if(next>=0){selected=next;const nextLog=dayItems()[next].logs.findIndex(l=>l.id===logId);if(nextLog<0)detail=false;page=Math.max(0,nextLog);}else{detail=false;selected=0;page=0;}
   render();
  },message=>{$('#save-state').textContent=message;sharedStale=/Offline|Reconnecting|Session expired/.test(message);renderHud();});
  $('#save-state').textContent='Connecting to shared updates…';

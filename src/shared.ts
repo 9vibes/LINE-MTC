@@ -15,7 +15,7 @@ export class SharedSession {
   await new Promise<void>(resolve=>{document.querySelector<HTMLFormElement>('#login-form')!.onsubmit=async e=>{e.preventDefault();const form=e.currentTarget as HTMLFormElement;const b=form.querySelector('button')!;b.disabled=true;try{const values=Object.fromEntries(new FormData(form));this.user=(await this.request('/api/login',{method:'POST',body:JSON.stringify(values)})).user;resolve();}catch(e){document.querySelector('#login-error')!.textContent=(e as Error).message;}finally{b.disabled=false;}};});
  }
  async read():Promise<Snapshot>{return this.request('/api/state');}
- accept(snapshot:Snapshot){if(!Number.isInteger(snapshot.revision)||snapshot.revision<this.revision)return;validateData(snapshot.aircraft);this.revision=snapshot.revision;this.onSnapshot?.(snapshot);}
+ accept(snapshot:Snapshot){if(!Number.isInteger(snapshot.revision)||snapshot.revision<=this.revision)return;validateData(snapshot.aircraft);this.revision=snapshot.revision;this.onSnapshot?.(snapshot);}
  watch(onSnapshot:(s:Snapshot)=>void,onStatus:(s:string)=>void){
   this.onSnapshot=onSnapshot;this.onStatus=onStatus;
   this.source=new EventSource('/api/events');
