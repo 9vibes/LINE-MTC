@@ -1,7 +1,9 @@
 declare const __LINE_MTC_SERVER__:string;
 
 // Keep the installed companion at a fixed scale while allowing normal scrolling.
-if (__LINE_MTC_SERVER__) {
+export const isCompanion=Boolean(__LINE_MTC_SERVER__);
+if (isCompanion) {
+ document.documentElement.classList.add('phone-companion');
  const viewport=document.querySelector('meta[name="viewport"]');
  viewport?.setAttribute('content','width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
  const style=document.createElement('style');
