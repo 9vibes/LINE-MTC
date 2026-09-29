@@ -2,6 +2,6 @@
 # With a dashboard-managed tunnel, add this hostname/service in its Published applications UI.
 # Keep the existing tunnel ID and credentials outside this repository.
 ingress:
-  - hostname: rl.kunas.pro
+  - hostname: mtc.kunas.pro
     service: http://10.12.12.12:28110
   - service: http_status:404

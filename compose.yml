@@ -9,7 +9,7 @@ services:
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-28110}:3000"
     environment:
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://rl.kunas.pro}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-https://mtc.kunas.pro}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:28110}
       LINE_MTC_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
       TZ: ${TZ:-America/New_York}
