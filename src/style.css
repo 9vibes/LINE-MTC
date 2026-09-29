@@ -13,3 +13,6 @@
 .status.--{background:#edf0eb;color:#6c7769}.status-buttons{flex-wrap:wrap}
 
 .sign-in{max-width:440px;margin:8vh auto}.sign-in label,.accounts label{margin:18px 0}.account-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.accounts select{width:100%}
+
+.phone-companion .status.def,.phone-companion [data-action-status="DEF"],.phone-companion .tabs [data-filter="DEF"]{color:#b42318;background:#fee4e2;border-color:#fda29b}
+.phone-companion [data-action-status="DEF"]:hover,.phone-companion .tabs [data-filter="DEF"].active{color:#fff;background:#b42318;border-color:#b42318}
