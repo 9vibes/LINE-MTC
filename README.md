@@ -10,31 +10,33 @@ Open the app on port **28110**. Sign in as **operator** using the password shown
 
 The initial operator password is copied into a salted password hash on first startup; changing the bootstrap environment later does not reset an existing account. SQLite, sessions and audit history persist in the app's `data` directory. Do not delete that directory when updating.
 
-## Cloudflare Tunnel: rl.kunas.pro
+## Cloudflare Tunnel: mtc.kunas.pro
 
 In your existing Cloudflare Tunnel, add a **published application route**:
 
 | Setting | Value |
 | --- | --- |
-| Hostname | `rl.kunas.pro` |
+| Hostname | `mtc.kunas.pro` |
 | Service type | HTTP |
 | Service URL | `10.12.12.12:28110` |
 
 The connector must be able to reach Umbrel at that address. Use the Umbrel LAN address from the connector, not `localhost` inside an unrelated container. Cloudflare provides HTTPS publicly; the connector reaches Umbrel using HTTP. No router port forwarding is required. Do not enable a cache-everything rule for this hostname; `/api/*` and HTML must bypass caching. Streaming updates send a heartbeat every 15 seconds and phones also refresh every 10 seconds as a fallback.
 
-The shipped Umbrel configuration accepts `https://rl.kunas.pro`, `http://umbrel.local:28110`, `http://10.12.12.12:28110`, and the Umbrel device hostname. If you use another local hostname/address, add its exact origin to `ALLOWED_ORIGINS` and restart the app. `PUBLIC_ORIGIN` must remain `https://rl.kunas.pro` for this domain. Native app authentication protects both the operator UI and shared data.
+The shipped Umbrel configuration accepts `https://mtc.kunas.pro`, `http://umbrel.local:28110`, `http://10.12.12.12:28110`, and the Umbrel device hostname. If you use another local hostname/address, add its exact origin to `ALLOWED_ORIGINS` and restart the app. `PUBLIC_ORIGIN` must remain `https://mtc.kunas.pro` for this domain. Native app authentication protects both the operator UI and shared data.
 
-After configuring the route, check `https://rl.kunas.pro/api/health` and then sign in at `https://rl.kunas.pro/`.
+For an existing installation configured with the former `rl.kunas.pro` address, change the LINE MTC app environment variable `PUBLIC_ORIGIN` to `https://mtc.kunas.pro` and restart the app. Updating the store alone does not override a saved environment value. An `Unrecognized request origin` response during sign-in means the running server has not accepted the new origin yet.
+
+After configuring the route, check `https://mtc.kunas.pro/api/health` and then sign in at `https://mtc.kunas.pro/`.
 
 ## Phones and glasses
 
 Generate a QR with the official Even CLI:
 
 ```sh
-npx evenhub qr --url https://rl.kunas.pro/companion
+npx evenhub qr --url https://mtc.kunas.pro/companion
 ```
 
-Scan it using Even Realities **Prototype Mode**, then sign in with the team member's account. The remote companion runs directly at the server origin, so its authenticated real-time connection works without third-party cookies. Each phone connects to its own paired G2. The browser operator can use `https://rl.kunas.pro/operator`.
+Scan it using Even Realities **Prototype Mode**, then sign in with the team member's account. The remote companion runs directly at the server origin, so its authenticated real-time connection works without third-party cookies. Each phone connects to its own paired G2. The browser operator can use `https://mtc.kunas.pro/operator`.
 
 A standalone `.ehpk` does not currently include a remote pairing flow: use this HTTPS QR workflow for shared mode. Static previews still work locally and retain device-only storage. Do not distribute a static package as a shared companion.
 
