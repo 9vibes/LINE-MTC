@@ -16,19 +16,29 @@ export function startServer(options={}){
  const snapshot=()=>{const s=db.prepare('SELECT * FROM state WHERE id=1').get();return {revision:s.revision,aircraft:JSON.parse(s.aircraft),updatedAt:s.updated_at,updatedBy:s.updated_by};};
  const json=(res,status,body)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(body));};
  const publicUser=u=>({username:u.username,role:u.role});
- const session=req=>{const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('line_mtc_session='))?.slice(17);return token?db.prepare('SELECT u.username,u.role,s.expires,s.token FROM sessions s JOIN users u ON u.username=s.username WHERE s.token=? AND s.expires>?').get(digest(token),Date.now()):undefined;};
+ const session=req=>{const token=req.mobile?(req.headers.authorization?.match(/^Bearer ([a-f0-9]{64})$/)?.[1]):(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('line_mtc_session='))?.slice(17);return token?db.prepare('SELECT u.username,u.role,s.expires,s.token FROM sessions s JOIN users u ON u.username=s.username WHERE s.token=? AND s.expires>?').get(digest(token),Date.now()):undefined;};
  const cookie=(token,age,req)=>`line_mtc_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${req.headers.origin?.startsWith('https:')?'; Secure':''}`;
  const broadcast=()=>{const body=`event: snapshot\ndata: ${JSON.stringify(snapshot())}\n\n`;for(const c of clients){if(!c.res.write(body))c.res.destroy();}};
  async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>5000000)throw Object.assign(Error('Request too large'),{status:413});}try{return JSON.parse(raw);}catch{throw Object.assign(Error('Invalid JSON'),{status:400});}}
  const fail=(status,message)=>{throw Object.assign(Error(message),{status});};
  const server=createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
-  const path=new URL(req.url,'http://localhost').pathname;
+  let path=new URL(req.url,'http://localhost').pathname;
+  // Packaged apps use explicit bearer credentials, never ambient browser cookies.
+  req.mobile=path.startsWith('/api/mobile/');
+  if(req.mobile){
+   path='/api/'+path.slice('/api/mobile/'.length);
+   res.setHeader('Access-Control-Allow-Origin','*');
+   res.setHeader('Access-Control-Allow-Methods','GET, POST, PUT, OPTIONS');
+   res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
+   res.setHeader('Access-Control-Max-Age','600');
+   if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}
+  }
   try{
    if(path==='/api/health')return json(res,200,{name:'LINE MTC',ok:true});
    if(path==='/api/config')return json(res,200,{mode:'shared',name:'LINE MTC'});
    if(!['GET','HEAD'].includes(req.method)){
-    if(!allowedOrigins.has(req.headers.origin))fail(403,'Unrecognized request origin');
+    if(!req.mobile&&!allowedOrigins.has(req.headers.origin))fail(403,'Unrecognized request origin');
     if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'JSON required');
    }
    if(path==='/api/login'&&req.method==='POST'){
@@ -39,12 +49,12 @@ export function startServer(options={}){
     const u=db.prepare('SELECT * FROM users WHERE username=?').get(key);
     if(typeof b.password!=='string'||b.password.length>256||!u||!passwordMatches(b.password,u.password))fail(401,'Incorrect username or password');
     const token=randomBytes(32).toString('hex');db.prepare('DELETE FROM sessions WHERE expires<?').run(now);db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(digest(token),u.username,now+sessionAge);
-    res.setHeader('Set-Cookie',cookie(token,sessionAge/1000,req));return json(res,200,{user:publicUser(u)});
+    if(!req.mobile)res.setHeader('Set-Cookie',cookie(token,sessionAge/1000,req));return json(res,200,{user:publicUser(u),...(req.mobile?{token}:{})});
    }
    if(path.startsWith('/api/')){
     const user=session(req);if(!user)fail(401,'Sign in to LINE MTC');
     if(path==='/api/session')return json(res,200,{user:publicUser(user)});
-    if(path==='/api/logout'&&req.method==='POST'){db.prepare('DELETE FROM sessions WHERE token=?').run(user.token);for(const c of clients)if(c.token===user.token)c.res.end();res.setHeader('Set-Cookie',cookie('',0,req));return json(res,200,{ok:true});}
+    if(path==='/api/logout'&&req.method==='POST'){db.prepare('DELETE FROM sessions WHERE token=?').run(user.token);for(const c of clients)if(c.token===user.token)c.res.end();if(!req.mobile)res.setHeader('Set-Cookie',cookie('',0,req));return json(res,200,{ok:true});}
     if(path==='/api/events'&&req.method==='GET'){
      if(clients.size>=100)fail(503,'Connection limit reached');
      res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache, no-store, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});

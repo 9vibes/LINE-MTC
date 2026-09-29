@@ -1,7 +1,12 @@
 import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {createServer} from 'node:http';
+import {readFileSync,existsSync} from 'node:fs';
+import {resolve,extname,sep} from 'node:path';
 import {startServer} from '../server-build/main.mjs';
 const dir=mkdtempSync(join(tmpdir(),'line-mtc-browser-'));
 const app=startServer({port:3077,dbPath:join(dir,'test.sqlite'),password:'test-only-password-123456',origin:'http://127.0.0.1:3077'});
-for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>app.close().then(()=>{rmSync(dir,{recursive:true,force:true});process.exit(0);}));
+const root=resolve('dist-companion');
+const companion=createServer((req,res)=>{const p=resolve(root,'.'+(req.url==='/'?'/index.html':req.url.split('?')[0]));if(!p.startsWith(root+sep)||!existsSync(p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css'})[extname(p)]||'application/octet-stream');res.end(readFileSync(p));}).listen(3078,'127.0.0.1');
+for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{companion.close();return app.close().then(()=>{rmSync(dir,{recursive:true,force:true});process.exit(0);});});

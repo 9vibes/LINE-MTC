@@ -2,10 +2,18 @@
   "package_id": "com.platoon.runninglog",
   "edition": "202601",
   "name": "Super Platano Log",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "min_sdk_version": "0.0.16",
   "entrypoint": "index.html",
-  "permissions": [],
+  "permissions": [
+    {
+      "name": "network",
+      "desc": "Sign in to LINE MTC and synchronize shared aircraft logs and statuses with your team.",
+      "whitelist": [
+        "https://mtc.kunas.pro"
+      ]
+    }
+  ],
   "supported_languages": [
     "en"
   ]

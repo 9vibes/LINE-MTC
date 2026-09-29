@@ -2,7 +2,7 @@ name: line-mtc
 services:
   server:
     build: .
-    image: ghcr.io/9vibes/line-mtc:1.0.1
+    image: ghcr.io/9vibes/line-mtc:1.0.2
     container_name: LINE-MTC
     restart: unless-stopped
     init: true

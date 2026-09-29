@@ -9,3 +9,5 @@ secrets
 *.png
 previews
 test-results
+
+dist-companion

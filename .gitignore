@@ -13,3 +13,4 @@ secrets/
 *.ehpk
 *.png
 previews/
+dist-companion/
