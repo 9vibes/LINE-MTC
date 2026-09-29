@@ -2,7 +2,7 @@
   "package_id": "com.platoon.runninglog",
   "edition": "202601",
   "name": "Super Platano Log",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "min_sdk_version": "0.0.16",
   "entrypoint": "index.html",
   "permissions": [

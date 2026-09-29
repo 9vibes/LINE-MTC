@@ -1,3 +1,4 @@
+import './companion-ui';
 import './style.css';
 import {type Aircraft,type Status,today,uid,militaryTime,sortAircraft,validateData,glassPages,glassOverview,glassRows,marquee,ACTION_STATUSES,applyLogStatus} from './model';
 import {Glasses} from './glasses';
