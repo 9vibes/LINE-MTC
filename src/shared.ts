@@ -1,3 +1,4 @@
+import {waitForEvenAppBridge,type EvenAppBridge} from '@evenrealities/even_hub_sdk';
 import {type Aircraft,validateData} from './model';
 declare const __LINE_MTC_SERVER__:string;
 const remote=__LINE_MTC_SERVER__;
@@ -8,8 +9,11 @@ export type Snapshot={revision:number;aircraft:Aircraft[];updatedAt:string|null;
 export class SharedSession {
  user!:User;revision=-1;pending=false;source?:{close:()=>void};
  private token='';
+ private storageBridge?:EvenAppBridge;
+ private async bounded<T>(operation:Promise<T>):Promise<T>{let timer:ReturnType<typeof setTimeout>|undefined;try{return await Promise.race([operation,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('Native storage unavailable')),4000);})]);}finally{clearTimeout(timer);}}
+ private async restore(){if(!remote)return;try{this.storageBridge=await this.bounded(waitForEvenAppBridge());const saved=await this.bounded(this.storageBridge.getLocalStorage(tokenKey));if(typeof saved==='string'&&/^[a-f0-9]{64}$/.test(saved))this.token=saved;}catch{/* Browser preview uses its existing local session. */}}
  constructor(){if(remote){try{this.token=localStorage.getItem(tokenKey)||'';}catch{/* Session stays in memory if storage is unavailable. */}}}
- private remember(token:string){this.token=token;try{if(token)localStorage.setItem(tokenKey,token);else localStorage.removeItem(tokenKey);}catch{/* Signing in still works for this launch. */}}
+ private async remember(token:string){this.token=token;try{if(token)localStorage.setItem(tokenKey,token);else localStorage.removeItem(tokenKey);}catch{/* Signing in still works for this launch. */}if(this.storageBridge){try{await this.bounded(this.storageBridge.setLocalStorage(tokenKey,token));}catch{/* Keep the browser fallback if native storage is temporarily unavailable. */}}}
  private onSnapshot?:(s:Snapshot)=>void;private onStatus?:(s:string)=>void;
  private connected=false;private polling=false;
  async request(path:string,init:RequestInit={}){
@@ -17,9 +21,10 @@ export class SharedSession {
   const result=await response.json();if(!response.ok)throw Object.assign(Error(result.error||'Server unavailable'),{status:response.status,snapshot:result});return result;
  }
  async signIn(){
-  try{this.user=(await this.request('/api/session')).user;return;}catch(e){if((e as {status?:number}).status!==401)throw e;}
+  await this.restore();
+  try{this.user=(await this.request('/api/session')).user;if(remote)await this.remember(this.token);return;}catch(e){if((e as {status?:number}).status!==401)throw e;if(remote)await this.remember('');}
   document.querySelector('#app')!.innerHTML=`<main class="sign-in"><p class="eyebrow">SHARED RUNNING LOG</p><h1>LINE MTC</h1><p>Sign in to share aircraft logs with your team.</p><form id="login-form"><label>Username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button><p role="alert" id="login-error"></p></form></main>`;
-  await new Promise<void>(resolve=>{document.querySelector<HTMLFormElement>('#login-form')!.onsubmit=async e=>{e.preventDefault();const form=e.currentTarget as HTMLFormElement;const b=form.querySelector('button')!;b.disabled=true;try{const values=Object.fromEntries(new FormData(form));const login=await this.request('/api/login',{method:'POST',body:JSON.stringify(values)});if(remote)this.remember(login.token);this.user=login.user;resolve();}catch(e){document.querySelector('#login-error')!.textContent=(e as Error).message;}finally{b.disabled=false;}};});
+  await new Promise<void>(resolve=>{document.querySelector<HTMLFormElement>('#login-form')!.onsubmit=async e=>{e.preventDefault();const form=e.currentTarget as HTMLFormElement;const b=form.querySelector('button')!;b.disabled=true;try{const values=Object.fromEntries(new FormData(form));const login=await this.request('/api/login',{method:'POST',body:JSON.stringify(values)});if(remote)await this.remember(login.token);this.user=login.user;resolve();}catch(e){document.querySelector('#login-error')!.textContent=(e as Error).message;}finally{b.disabled=false;}};});
  }
  async read():Promise<Snapshot>{return this.request('/api/state');}
  accept(snapshot:Snapshot){if(!Number.isInteger(snapshot.revision)||snapshot.revision<=this.revision)return;validateData(snapshot.aircraft);this.revision=snapshot.revision;this.onSnapshot?.(snapshot);}
@@ -36,7 +41,7 @@ export class SharedSession {
     const heartbeat=()=>{clearTimeout(idle);idle=setTimeout(()=>controller?.abort(),45000);};
     try{
      heartbeat();const response=await fetch(endpoint('/api/events'),{headers:{Authorization:'Bearer '+this.token},credentials:'omit',cache:'no-store',signal:controller.signal});
-     if(response.status===401){this.remember('');stopped=true;onStatus('Session expired · reopen to sign in');return;}
+     if(response.status===401){await this.remember('');stopped=true;onStatus('Session expired · reopen to sign in');return;}
      if(!response.ok||!response.body)throw Error('Stream unavailable');
      const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
      while(!stopped){const chunk=await reader.read();if(chunk.done)break;heartbeat();buffer+=decoder.decode(chunk.value,{stream:true}).replace(/\r/g,'');let end;
@@ -59,7 +64,7 @@ export class SharedSession {
   try{const result=await this.request('/api/state',{method:'PUT',body:JSON.stringify({revision,aircraft,statusAction})});this.accept(result);this.onStatus?.('Saved · shared with your team');return result as Snapshot;}
   catch(e){const error=e as Error&{status?:number;snapshot?:Snapshot};if(error.status===409&&error.snapshot)this.accept(error.snapshot);this.onStatus?.('Not saved · '+error.message);throw e;}finally{this.pending=false;}
  }
- async logout(){await this.request('/api/logout',{method:'POST',body:'{}'});this.source?.close();if(remote)this.remember('');location.reload();}
+ async logout(){await this.request('/api/logout',{method:'POST',body:'{}'});this.source?.close();if(remote)await this.remember('');location.reload();}
 }
 export async function connectShared():Promise<SharedSession|undefined>{
  const config=await fetch(endpoint('/api/config'),{cache:'no-store',signal:AbortSignal.timeout(8000)});
