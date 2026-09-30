@@ -30,3 +30,7 @@
 
 .operator-ui .workspace{grid-template-columns:minmax(0,1fr)}
 .operator-ui .log-number{color:inherit;font-weight:500;overflow-wrap:anywhere}
+
+.operator-ui footer>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.operator-ui footer .clear-aircraft{width:auto;margin:0 0 0 12px;padding:8px 12px;border:1px solid #fda29b;color:#b42318;background:#fff5f5;font-weight:650}
+.operator-ui footer .clear-aircraft:hover{background:#fee4e2}
