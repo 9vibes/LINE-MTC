@@ -12,7 +12,7 @@ for(const packaged of [false,true])test((packaged?'packaged companion: ':'websit
  await a.getByRole('button',{name:'＋ Add aircraft',exact:true}).click();await a.getByLabel('Tail number').fill('3074');await a.getByLabel('Arrival time (ETA)').fill('13:12');await a.getByLabel('Gate',{exact:true}).fill('88A');await a.getByLabel('Log number',{exact:true}).fill('1234567');await a.getByLabel('Brief discrepancy description').fill('Tray table latch loose');await a.getByRole('button',{name:'Save aircraft',exact:true}).click();
  await expect(b.locator('.tail h2')).toHaveText(['3074']);await expect(b.locator('.arrival b')).toHaveText(['13:12']);await expect.poll(async()=>JSON.stringify(await b.evaluate(()=>(window as any).calls))).toContain('3074');
  await a.getByRole('button',{name:'Edit aircraft 3074',exact:true}).click();await a.getByLabel('Gate',{exact:true}).fill('90');
- await b.getByLabel('Status for log 1234567').selectOption('C/W');await expect(a.locator('#hud')).toContainText('C/W');
+ await b.getByLabel('Status for log 1234567').selectOption('C/W');await expect(a.getByLabel('Status for log 1234567')).toHaveValue('C/W');
  await a.getByRole('button',{name:'Save aircraft',exact:true}).click();await expect(a.locator('#editor-notice')).toContainText('Another user changed');await a.getByRole('button',{name:'Cancel',exact:true}).click();await expect(a.locator('.gate b')).toHaveText(['88A']);
  await b.reload();await expect(b.getByLabel('Status for log 1234567')).toHaveValue('C/W');await expect(b.locator('.aircraft-foot')).toContainText('Off plane');
  const current=await (await a.request.get('/api/state')).json();const selectedDate=current.aircraft[0].date;
