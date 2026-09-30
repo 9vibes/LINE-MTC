@@ -22,13 +22,13 @@ for(const packaged of [false,true])test((packaged?'packaged companion: ':'websit
  const preserved=seeded.aircraft.find((entry:any)=>entry.id===other.id);
  // Observe the extra date on the phone before clearing the original shift.
  await b.locator('#date').fill(otherDate);await expect(b.locator('.aircraft')).toHaveCount(1);await b.locator('#date').fill(selectedDate);await expect(b.locator('.aircraft')).toHaveCount(1);
- const clear=b.getByRole('button',{name:packaged?'Clear this day’s aircraft':'Clear all aircraft',exact:true});
- b.once('dialog',async dialog=>{expect(dialog.message()).toContain(packaged?`for ${selectedDate} only`:'every shift date for everyone');await dialog.dismiss();});
+ const clear=b.getByRole('button',{name:'Clear this day’s aircraft',exact:true});
+ b.once('dialog',async dialog=>{expect(dialog.message()).toContain(`for ${selectedDate} only`);await dialog.dismiss();});
  await clear.click();await expect(b.locator('.aircraft')).toHaveCount(1);await expect(a.locator('.aircraft')).toHaveCount(1);
  b.once('dialog',dialog=>dialog.accept());await clear.click();
  await expect(b.locator('.aircraft')).toHaveCount(0);await expect(a.locator('.aircraft')).toHaveCount(0);await b.reload();await expect(b.locator('.aircraft')).toHaveCount(0);
- const remaining=await (await a.request.get('/api/state')).json();expect(remaining.aircraft).toEqual(packaged?[preserved]:[]);
- if(packaged){await clear.click();await expect(b.locator('#notice')).toContainText(`There are no aircraft to clear for ${selectedDate}`);await b.locator('#date').fill(otherDate);await expect(b.locator('.aircraft')).toHaveCount(1);}
+ const remaining=await (await a.request.get('/api/state')).json();expect(remaining.aircraft).toEqual([preserved]);
+ {await clear.click();await expect(b.locator('#notice')).toContainText(`There are no aircraft to clear for ${selectedDate}`);await b.locator('#date').fill(otherDate);await expect(b.locator('.aircraft')).toHaveCount(1);}
  if(packaged){await b.getByRole('button',{name:'Sign out',exact:true}).click();await expect(b.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect.poll(()=>b.evaluate(()=>localStorage.getItem('line-mtc-companion-session'))).toBeNull();}
  await operator.close();await phone.close();
 });

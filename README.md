@@ -38,11 +38,11 @@ npx evenhub qr --url https://mtc.kunas.pro/companion
 
 Scan it using Even Realities **Prototype Mode**, then sign in with the team member's account. The remote companion runs directly at the server origin, so its authenticated real-time connection works without third-party cookies. Each phone connects to its own paired G2. The browser operator can use `https://mtc.kunas.pro/operator`.
 
-### Installable Even Hub app (1.0.11)
+### Installable Even Hub app (1.0.12)
 
-Update LINE MTC on Umbrel to **1.0.2 or later** before using the packaged companion. Build it with `npm run pack`; the output is `line-mtc-1.0.11.ehpk`. Upload it to your project’s **Private builds** in the [Even Hub developer portal](https://evenhub.evenrealities.com), then install it through Even Realities → Even Hub → Me → Apps → Private builds. Private builds are account-only; use the portal’s Beta Testing flow to distribute to teammates. Minimum Even Realities app version: **2.2.10**.
+Update LINE MTC on Umbrel to **1.0.2 or later** before using the packaged companion. Build it with `npm run pack`; the output is `line-mtc-1.0.12.ehpk`. Upload it to your project’s **Private builds** in the [Even Hub developer portal](https://evenhub.evenrealities.com), then install it through Even Realities → Even Hub → Me → Apps → Private builds. Private builds are account-only; use the portal’s Beta Testing flow to distribute to teammates. Minimum Even Realities app version: **2.2.10**.
 
-The 1.0.11 packaged app removes demo aircraft controls, colors C/W green, DEF red, SUPP blue and PEND orange, and disables pinch/double-tap zoom and prevents input-focus zoom in the phone interface while retaining scrolling. It works with server 1.0.2; no server update is required.
+The 1.0.12 packaged app removes demo aircraft controls, colors C/W green, DEF red, SUPP blue and PEND orange, and disables pinch/double-tap zoom and prevents input-focus zoom in the phone interface while retaining scrolling. It works with server 1.0.2; no server update is required.
 
 The packaged app retains the Super Platano Log interface and connects to **https://mtc.kunas.pro**. Sign in with an existing LINE MTC account; no password is bundled. It uses a revocable seven-day bearer session stored through Even’s native local-storage bridge with WebView storage as a fallback, cross-origin live events, and polling fallback. Sign out to revoke the session. The website continues using HttpOnly cookies. Dedicated `/api/mobile/*` endpoints never accept cookies and expose CORS only for explicit bearer authentication; browser routes retain their origin checks. Team roles, conflicts, and off-plane timestamps are enforced by the same server.
 
@@ -89,7 +89,7 @@ npm run test:shared
 
 The GitHub release workflow runs browser, backend, and two-client synchronization tests before publishing amd64/arm64 images to `ghcr.io/9vibes/line-mtc`. Umbrel releases pin the resulting image digest. Do not point an app-store release at an image before its build and anonymous pull check succeed.
 
-In phone app 1.0.10, Clear this day’s aircraft beneath the glasses preview confirms the selected shift date and clears only that date for all users, preserving every other date. The server website’s Clear all aircraft action still clears every date. Viewer accounts cannot clear data; concurrent edits reject a stale clear request.
+In phone app 1.0.10, Clear this day’s aircraft beneath the glasses preview confirms the selected shift date and clears only that date for all users, preserving every other date. Server 1.0.12 uses the same selected-day-only action, preserving other dates. Viewer accounts cannot clear data; concurrent edits reject a stale clear request.
 
 Server 1.0.8 changes the website’s DEF status tag from purple to red.
 
