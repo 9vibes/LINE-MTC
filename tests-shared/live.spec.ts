@@ -15,10 +15,20 @@ for(const packaged of [false,true])test((packaged?'packaged companion: ':'websit
  await b.getByLabel('Status for log 1234567').selectOption('C/W');await expect(a.locator('#hud')).toContainText('C/W');
  await a.getByRole('button',{name:'Save aircraft',exact:true}).click();await expect(a.locator('#editor-notice')).toContainText('Another user changed');await a.getByRole('button',{name:'Cancel',exact:true}).click();await expect(a.locator('.gate b')).toHaveText(['88A']);
  await b.reload();await expect(b.getByLabel('Status for log 1234567')).toHaveValue('C/W');await expect(b.locator('.aircraft-foot')).toContainText('Off plane');
- b.once('dialog',async dialog=>{expect(dialog.message()).toContain('every shift date for everyone');await dialog.dismiss();});
- await b.getByRole('button',{name:'Clear all aircraft',exact:true}).click();await expect(b.locator('.aircraft')).toHaveCount(1);await expect(a.locator('.aircraft')).toHaveCount(1);
- b.once('dialog',dialog=>dialog.accept());await b.getByRole('button',{name:'Clear all aircraft',exact:true}).click();
+ const current=await (await a.request.get('/api/state')).json();const selectedDate=current.aircraft[0].date;
+ const otherDate=selectedDate==='2099-01-01'?'2099-01-02':'2099-01-01';
+ const other={...current.aircraft[0],id:'another-day',date:otherDate,logs:current.aircraft[0].logs.map((l:any)=>({...l,id:'another-day-log'}))};
+ const seeded=await (await a.request.put('/api/state',{headers:{Origin:'http://127.0.0.1:3077'},data:{revision:current.revision,aircraft:[...current.aircraft,other]}})).json();
+ const preserved=seeded.aircraft.find((entry:any)=>entry.id===other.id);
+ // Observe the extra date on the phone before clearing the original shift.
+ await b.locator('#date').fill(otherDate);await expect(b.locator('.aircraft')).toHaveCount(1);await b.locator('#date').fill(selectedDate);await expect(b.locator('.aircraft')).toHaveCount(1);
+ const clear=b.getByRole('button',{name:packaged?'Clear this day’s aircraft':'Clear all aircraft',exact:true});
+ b.once('dialog',async dialog=>{expect(dialog.message()).toContain(packaged?`for ${selectedDate} only`:'every shift date for everyone');await dialog.dismiss();});
+ await clear.click();await expect(b.locator('.aircraft')).toHaveCount(1);await expect(a.locator('.aircraft')).toHaveCount(1);
+ b.once('dialog',dialog=>dialog.accept());await clear.click();
  await expect(b.locator('.aircraft')).toHaveCount(0);await expect(a.locator('.aircraft')).toHaveCount(0);await b.reload();await expect(b.locator('.aircraft')).toHaveCount(0);
+ const remaining=await (await a.request.get('/api/state')).json();expect(remaining.aircraft).toEqual(packaged?[preserved]:[]);
+ if(packaged){await clear.click();await expect(b.locator('#notice')).toContainText(`There are no aircraft to clear for ${selectedDate}`);await b.locator('#date').fill(otherDate);await expect(b.locator('.aircraft')).toHaveCount(1);}
  if(packaged){await b.getByRole('button',{name:'Sign out',exact:true}).click();await expect(b.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect.poll(()=>b.evaluate(()=>localStorage.getItem('line-mtc-companion-session'))).toBeNull();}
  await operator.close();await phone.close();
 });
