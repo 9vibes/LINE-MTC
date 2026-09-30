@@ -25,3 +25,5 @@
 
 .phone-companion .status.pend,.phone-companion [data-action-status="PEND"],.phone-companion .tabs [data-filter="PEND"]{color:#9a3412;background:#ffedd5;border-color:#fdba74}
 .phone-companion [data-action-status="PEND"]:hover,.phone-companion .tabs [data-filter="PEND"].active{color:#fff;background:#9a3412;border-color:#9a3412}
+
+.clear-aircraft{width:100%;margin-top:12px;color:#b42318;background:#fff5f5;border-color:#fda29b}.clear-aircraft:hover{background:#fee4e2}

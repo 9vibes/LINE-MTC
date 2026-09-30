@@ -15,6 +15,10 @@ for(const packaged of [false,true])test((packaged?'packaged companion: ':'websit
  await b.getByLabel('Status for log 1234567').selectOption('C/W');await expect(a.locator('#hud')).toContainText('C/W');
  await a.getByRole('button',{name:'Save aircraft',exact:true}).click();await expect(a.locator('#editor-notice')).toContainText('Another user changed');await a.getByRole('button',{name:'Cancel',exact:true}).click();await expect(a.locator('.gate b')).toHaveText(['88A']);
  await b.reload();await expect(b.getByLabel('Status for log 1234567')).toHaveValue('C/W');await expect(b.locator('.aircraft-foot')).toContainText('Off plane');
+ b.once('dialog',async dialog=>{expect(dialog.message()).toContain('every shift date for everyone');await dialog.dismiss();});
+ await b.getByRole('button',{name:'Clear all aircraft',exact:true}).click();await expect(b.locator('.aircraft')).toHaveCount(1);await expect(a.locator('.aircraft')).toHaveCount(1);
+ b.once('dialog',dialog=>dialog.accept());await b.getByRole('button',{name:'Clear all aircraft',exact:true}).click();
+ await expect(b.locator('.aircraft')).toHaveCount(0);await expect(a.locator('.aircraft')).toHaveCount(0);await b.reload();await expect(b.locator('.aircraft')).toHaveCount(0);
  if(packaged){await b.getByRole('button',{name:'Sign out',exact:true}).click();await expect(b.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect.poll(()=>b.evaluate(()=>localStorage.getItem('line-mtc-companion-session'))).toBeNull();}
  await operator.close();await phone.close();
 });
