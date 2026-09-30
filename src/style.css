@@ -16,3 +16,12 @@
 
 .phone-companion .status.def,.phone-companion [data-action-status="DEF"],.phone-companion .tabs [data-filter="DEF"]{color:#b42318;background:#fee4e2;border-color:#fda29b}
 .phone-companion [data-action-status="DEF"]:hover,.phone-companion .tabs [data-filter="DEF"].active{color:#fff;background:#b42318;border-color:#b42318}
+
+.phone-companion .status.cw,.phone-companion [data-action-status="C/W"],.phone-companion .tabs [data-filter="C/W"]{color:#166534;background:#dcfce7;border-color:#86efac}
+.phone-companion [data-action-status="C/W"]:hover,.phone-companion .tabs [data-filter="C/W"].active{color:#fff;background:#166534;border-color:#166534}
+
+.phone-companion .status.supp,.phone-companion [data-action-status="SUPP"],.phone-companion .tabs [data-filter="SUPP"]{color:#1d4ed8;background:#dbeafe;border-color:#93c5fd}
+.phone-companion [data-action-status="SUPP"]:hover,.phone-companion .tabs [data-filter="SUPP"].active{color:#fff;background:#1d4ed8;border-color:#1d4ed8}
+
+.phone-companion .status.pend,.phone-companion [data-action-status="PEND"],.phone-companion .tabs [data-filter="PEND"]{color:#9a3412;background:#ffedd5;border-color:#fdba74}
+.phone-companion [data-action-status="PEND"]:hover,.phone-companion .tabs [data-filter="PEND"].active{color:#fff;background:#9a3412;border-color:#9a3412}
