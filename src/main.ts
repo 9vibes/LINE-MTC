@@ -38,7 +38,7 @@ function renderHud(){
  const content=detail ? [
   `A/C ${aircraft.tail} | OFF Plane Time: ${aircraft.off||'--:--'}`,
   `LOG NUMBER: ${log.number.replace(/^DEMO-/, '')||'TBD'} (${page+1}/${aircraft.logs.length})`,
-  `${log.status} ${marquee(log.description,38,tick)}`,
+  `${log.status} | ${marquee(log.description,38,tick)}`,
   ...choices.map((s,i)=>`${i===choice?'>':' '} ${s}`),
   sharedStale?'Offline · reconnect to save':'Tap: save | Double tap: back'
  ].join('\n') : overview.text;
