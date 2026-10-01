@@ -16,6 +16,7 @@ WORKDIR /app
 COPY package.json ./
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server-build ./server-build
+COPY --from=build /app/node_modules/@evenrealities/pretext ./node_modules/@evenrealities/pretext
 RUN mkdir /data && chown node:node /data
 USER node
 ENV NODE_ENV=production PORT=3000 DB_PATH=/data/line-mtc.sqlite TZ=America/New_York
