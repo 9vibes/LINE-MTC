@@ -112,3 +112,7 @@ Deploy the rebuilt server to make this feature available on the live website. No
 The server aircraft cards show ETD beside ETA, and the editor places Departure time below Arrival time. ETD accepts 24-hour time, remains optional, and is preserved when older phone clients save aircraft. The server editor no longer offers off-plane time or log status controls; saved values are preserved, and aircraft-card status controls remain available.
 
 The installed companion removes Clear this day's aircraft and the SHARED header suffix, displays the banana and SUPER PLATANO A/C ROUTING branding, and uses SUPER PLATANO A/C as the Even Hub app-list name to fit its 20-character limit. Off-plane time remains available in the phone editor.
+
+## Server 1.0.18 / companion 1.0.21
+
+On narrow phone screens, the server keeps ETA, ETD and Gate beside the aircraft number without horizontal scrolling. The companion supports ETD editing and shows read-only log type beside the log number, separated by a vertical bar. MEL and OPEN are red; NEF is yellow. Its log rows no longer reserve the former log-type row. Shared-client tests run serially because they use one shared server database.

@@ -1,6 +1,6 @@
 {
   "name": "line-mtc",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Shared aircraft running log and Even G2 companion",
   "main": "index.js",
   "scripts": {
