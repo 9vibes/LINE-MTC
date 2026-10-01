@@ -4,7 +4,7 @@ import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomBytes} from 'node:crypto';
 import {openStore,digest,passwordMatches,passwordHash} from './store.mjs';
-import {validateData,applyLogStatus} from './model.js';
+import {validateData,recordOffPlane} from './model.js';
 
 export function startServer(options={}){
  const root=resolve(options.dist||process.env.STATIC_DIR||'dist');
@@ -91,10 +91,17 @@ export function startServer(options={}){
       for(const key of ['logType','healthPoints'])if(old&&!(key in l)&&key in old)l[key]=old[key];
      }
      const now=new Date();
-     for(const a of next)for(const l of a.logs){const old=before.aircraft.find(x=>x.id===a.id)?.logs.find(x=>x.id===l.id);const explicit=b.statusAction?.aircraftId===a.id&&b.statusAction?.logId===l.id;
-      if((old?.status!==l.status||explicit)&&['C/W','DEF','SUPP'].includes(l.status))next=applyLogStatus(next,a.id,l.id,l.status,now);
+     if(b.statusAction?.recordOffPlane){
+      const target=next.find(a=>a.id===b.statusAction.aircraftId&&a.logs.some(l=>l.id===b.statusAction.logId));
+      if(!target)fail(400,'Aircraft or log no longer exists');
+      next=recordOffPlane(next,target.id,now);
+     }else if(b.statusAction){
+      // A status change must never record time, including older phone clients.
+      const previous=before.aircraft.find(a=>a.id===b.statusAction.aircraftId);
+      const target=next.find(a=>a.id===b.statusAction.aircraftId);
+      if(previous&&target){target.off=previous.off;if(previous.offRecordedAt)target.offRecordedAt=previous.offRecordedAt;else delete target.offRecordedAt;}
      }
-     db.exec('BEGIN IMMEDIATE');try{db.prepare('UPDATE state SET revision=?,aircraft=?,updated_at=?,updated_by=? WHERE id=1').run(before.revision+1,JSON.stringify(next),now.toISOString(),user.username);db.prepare('INSERT INTO audit(revision,username,at,action) VALUES(?,?,?,?)').run(before.revision+1,user.username,now.toISOString(),b.statusAction?'status':'edit');db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
+     db.exec('BEGIN IMMEDIATE');try{db.prepare('UPDATE state SET revision=?,aircraft=?,updated_at=?,updated_by=? WHERE id=1').run(before.revision+1,JSON.stringify(next),now.toISOString(),user.username);db.prepare('INSERT INTO audit(revision,username,at,action) VALUES(?,?,?,?)').run(before.revision+1,user.username,now.toISOString(),b.statusAction?.recordOffPlane?'off-plane':b.statusAction?'status':'edit');db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
      broadcast();return json(res,200,snapshot());
     }
     return json(res,404,{error:'Not found'});

@@ -58,7 +58,7 @@ export class SharedSession {
   const refresh=async()=>{if(this.polling)return;this.polling=true;try{this.accept(await this.read());onStatus(this.connected?'Live · shared with your team':'Connected · refreshing every 10 seconds');}catch(e){if((e as {status?:number}).status===401){this.source?.close();onStatus('Session expired · reopen to sign in');}else onStatus('Offline · showing last received data');}finally{this.polling=false;}};
   setInterval(()=>void refresh(),10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});window.addEventListener('online',()=>void refresh());
  }
- async save(aircraft:Aircraft[],revision=this.revision,statusAction?:{aircraftId:string;logId:string}){
+ async save(aircraft:Aircraft[],revision=this.revision,statusAction?:{aircraftId:string;logId:string;recordOffPlane?:boolean}){
   if(this.pending)throw Error('A save is already in progress. Please try again after it finishes.');
   this.pending=true;this.onStatus?.('Saving to LINE MTC…');
   try{const result=await this.request('/api/state',{method:'PUT',body:JSON.stringify({revision,aircraft,statusAction})});this.accept(result);this.onStatus?.('Saved · shared with your team');return result as Snapshot;}

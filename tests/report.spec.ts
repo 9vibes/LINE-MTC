@@ -32,7 +32,14 @@ test('operator report fields persist through edit, export ignores filter, and em
   await route.fulfill({contentType:'application/json',body:JSON.stringify(path==='config'?{mode:'shared'}:path==='session'?{user:{username:'operator',role:'operator'}}:state)});
  });
  await page.setViewportSize({width:1440,height:1000});await page.goto('/operator');
- await page.getByLabel('Log type for log 01839400',{exact:true}).selectOption('NEF');
+ await expect(page.locator('#aircraft select[data-log-type]')).toHaveCount(0);
+ await page.getByRole('button',{name:'Edit aircraft 08337'}).click();
+ await page.getByLabel('Log type',{exact:true}).first().selectOption('NEF');
+ const numberBox=await page.getByLabel('Log number',{exact:true}).first().boundingBox(),typeBox=await page.getByLabel('Log type',{exact:true}).first().boundingBox();
+ expect(Math.abs(numberBox!.y-typeBox!.y)).toBeLessThan(2);
+ await page.getByRole('button',{name:'Save aircraft',exact:true}).click();
+ await expect(page.locator('.log-number').first()).toHaveText('01839400 | NEF');
+ await expect(page.locator('.phone-log-type').first()).toHaveCSS('color','rgb(179, 143, 0)');
  await page.getByLabel('Health points for log 01839400',{exact:true}).fill('-0.5');await page.getByLabel('Health points for log 01839400',{exact:true}).press('Tab');
  await expect.poll(()=>state.aircraft[0].logs[0].healthPoints).toBe(-.5);
  expect(state.aircraft[0].off).toBe('');

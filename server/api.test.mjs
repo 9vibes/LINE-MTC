@@ -24,7 +24,7 @@ test('authentication, real-time updates, concurrency, permissions and restart pe
   assert.equal((await request('/api/state','PUT',{revision:1,aircraft:[]},viewer)).status,403);
   assert.equal((await request('/api/users','GET',null,editor)).status,403);
   const changed=structuredClone(aircraft);changed.logs[0].status='C/W';
-  const result=await (await request('/api/state','PUT',{revision:1,aircraft:[changed]},editor)).json();assert.equal(result.revision,2);assert.match(result.aircraft[0].off,/^\d\d:\d\d$/);assert.ok(result.aircraft[0].offRecordedAt);assert.equal(result.updatedBy,'tech1');
+  const result=await (await request('/api/state','PUT',{revision:1,aircraft:[changed]},editor)).json();assert.equal(result.revision,2);assert.equal(result.aircraft[0].off,'');assert.equal(result.aircraft[0].offRecordedAt,undefined);assert.equal(result.updatedBy,'tech1');
   assert.equal((await request('/api/state','PUT',{revision:2,aircraft:[{...aircraft,eta:'27:20'}]},editor)).status,400);
   assert.equal((await request('/api/state','PUT',{revision:2,aircraft:[aircraft,{...aircraft,id:'a2',logs:[{...aircraft.logs[0],id:'l2'}]}]},editor)).status,400);
   abort.abort();await app.close();app=startServer({port:0,dbPath:join(dir,'test.sqlite'),origin:'http://test.local'});await once(app.server,'listening');url=`http://127.0.0.1:${app.server.address().port}`;
@@ -75,5 +75,16 @@ test('report metadata persists, validates, and survives legacy phone edits',asyn
   item=structuredClone(state.aircraft[0]);item.logs[0].healthPoints=null;item.logs[0].logType=null;
   state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).json();
   assert.equal(state.aircraft[0].logs[0].healthPoints,null);assert.equal(state.aircraft[0].logs[0].logType,null);
+  const action={aircraftId:item.id,logId:item.logs[0].id,recordOffPlane:true};
+  const previousStatus=state.aircraft[0].logs[0].status;
+  state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:state.aircraft,statusAction:action})).json();
+  assert.match(state.aircraft[0].off,/^\d\d:\d\d$/);assert.ok(state.aircraft[0].offRecordedAt);
+  assert.equal(state.aircraft[0].logs[0].status,previousStatus);
+  const off=state.aircraft[0].off,recorded=state.aircraft[0].offRecordedAt;
+  for(const status of ['C/W','DEF','SUPP']){
+   item=structuredClone(state.aircraft[0]);item.logs[0].status=status;item.off='00:00';item.offRecordedAt='old-client-stamp';
+   state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item],statusAction:{aircraftId:item.id,logId:item.logs[0].id}})).json();
+   assert.equal(state.aircraft[0].off,off);assert.equal(state.aircraft[0].offRecordedAt,recorded);assert.equal(state.aircraft[0].logs[0].status,status);
+  }
  }finally{await app.close();rmSync(dir,{recursive:true,force:true});}
 });

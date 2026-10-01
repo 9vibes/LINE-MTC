@@ -54,8 +54,8 @@ While the companion is open, edits publish immediately to every connected phone 
 
 - New logs default to `--`. Status choices: `--`, `PEND`, `C/W`, `DEF`, `SUPP`.
 - ETA uses 24-hour `HH:MM`; unknown times sort last.
-- Each aircraft can have multiple discrepancy logs; the glasses show five log rows per page.
-- C/W, DEF and SUPP selections stamp the server's current off-plane time in `TZ` (default `America/New_York`). PEND and `--` leave it unchanged.
+- Each aircraft can have multiple discrepancy logs; the glasses show six log rows per page.
+- LOG TIME OFF PLANE records the server's current off-plane time in `TZ` (default `America/New_York`). Status selections preserve the recorded time.
 - SQLite is the source of truth. All users share the same aircraft list and shift dates.
 - Writes include a revision. A stale write is rejected with an explanation, and the latest shared state loads. If an edit dialog is stale, close/reopen it and reapply the change. Another user's changes are never silently overwritten.
 - Shared mode never uploads local browser data or auto-seeds examples. To migrate your prototype, export its JSON backup, sign in to LINE MTC, and import it. Import replaces the whole shared dataset and requires an in-app confirmation.
@@ -101,7 +101,7 @@ Companion 1.0.13 separates the selected log’s status and discrepancy with a ve
 
 ## Server 1.0.16: daily Excel report
 
-In the operator website, each discrepancy row has a Log type dropdown (NEF, MEL, OPEN) and a Health points input before the action/status selector. Changes save automatically when selected or when leaving the points field. Points support negative and decimal values; clearing an input leaves it blank. These fields do not change off-plane times. Older companion edits preserve report metadata.
+In the operator website, the aircraft editor has a Log type dropdown (NEF, MEL, OPEN) beside each log number, saved with the aircraft. Daily rows show log number | type, with MEL/OPEN red and NEF yellow. Health points remain editable beside the action/status selector and save when leaving the field. Points support negative and decimal values; clearing an input leaves it blank. These fields do not change off-plane times. Older companion edits preserve report metadata.
 
 Print Report, next to Add aircraft, downloads `LINE-MTC-report-YYYY-MM-DD.xlsx` for the selected shift date, including all logs regardless of search or status filters. Open the workbook in Excel or another compatible spreadsheet application to print. It uses a navy date band, red headers, seven bordered columns, a minimum of 20 entry rows, wrapped descriptions, and landscape printing with repeated headers. Long reports continue onto additional pages. The Comments Def Reason column is blank for manual notes in the workbook. Existing records without type or points remain blank; the export does not infer them.
 
@@ -116,3 +116,7 @@ The installed companion removes Clear this day's aircraft and the SHARED header 
 ## Server 1.0.18 / companion 1.0.21
 
 On narrow phone screens, the server keeps ETA, ETD and Gate beside the aircraft number without horizontal scrolling. The companion supports ETD editing and shows read-only log type beside the log number, separated by a vertical bar. MEL and OPEN are red; NEF is yellow. Its log rows no longer reserve the former log-type row. Shared-client tests run serially because they use one shared server database.
+
+## Server 1.0.19 / companion 1.0.35
+
+Glasses use measured G2 font widths for scrolling discrepancies and show six log rows, a small blinking continuation arrow behind aircraft text, and both clock formats. The selected aircraft view shows ETD, a centered T- interval calculated as ETD minus ETA (including overnight turns), and off-plane time on the right. Log type appears beside the log number. LOG TIME OFF PLANE replaces the unset-status menu action; C/W, DEF and SUPP no longer record off-plane time. Update the server and companion together for this behavior. Existing data is preserved.

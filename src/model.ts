@@ -1,3 +1,4 @@
+import {getTextWidth} from '@evenrealities/pretext';
 export type Status = 'C/W' | 'DEF' | 'PEND' | 'SUPP' | '--';
 export type LogType = 'NEF' | 'MEL' | 'OPEN';
 export type Log = {id:string;number:string;description:string;status:Status;logType?:LogType|null;healthPoints?:number|null};
@@ -5,7 +6,18 @@ export type Aircraft = {id:string;date:string;tail:string;eta:string;etd?:string
 export function displayClock(now=new Date()) {
  const days=['Sun','Mon','Tues','Wed','Thurs','Fri','Sat'];
  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'];
- return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} ${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()}`;
+ return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} | ${now.getHours()%12||12}:${String(now.getMinutes()).padStart(2,'0')}${now.getHours()<12?'AM':'PM'} ${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()}`;
+}
+export function departureHeader(a:Aircraft) {
+ const etd=a.etd?militaryTime(a.etd):'--:--';
+ const minutes=(value:string)=>{
+  const match=militaryTime(value).match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  return match?Number(match[1])*60+Number(match[2]):null;
+ };
+ const arrival=minutes(a.eta),departure=minutes(a.etd||'');
+ if(arrival===null||departure===null)return `A/C ${a.tail} | ETD: ${etd} T- --:--`;
+ const remaining=(departure-arrival+24*60)%(24*60);
+ return `A/C ${a.tail} | ETD: ${etd} T-${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`;
 }
 export const today = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 export const uid = () => globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -31,7 +43,7 @@ export function validateData(value:unknown):Aircraft[] {
 }
 export function glassPages(aircraft:Aircraft[],date:string){return sortAircraft(aircraft).flatMap(a=>a.logs.map((l,i)=>({aircraftId:a.id,logId:l.id, text:`PLATOON  /  ${date}\nA/C ${a.tail}   ETA ${militaryTime(a.eta)}   GATE ${a.gate||'TBD'}\n${l.status}   LOG ${l.number||'TBD'}   (${i+1}/${a.logs.length})\n\n${l.description}${a.off?'\nOFF PLANE '+a.off:''}`})));}
 
-export const AIRCRAFT_PER_SCREEN = 5;
+export const AIRCRAFT_PER_SCREEN = 6;
 const compactField = (value:string, max:number) => {
  const clean=value.replace(/\s+/g,' ').trim();
  return clean.length>max ? clean.slice(0,max-1)+'~' : clean;
@@ -40,7 +52,7 @@ export function aircraftStatus(a:Aircraft): Status | 'MIX' {
  const states=new Set(a.logs.map(l=>l.status));
  return states.size===1 ? a.logs[0].status : 'MIX';
 }
-export const LOG_ROWS_PER_SCREEN = 5;
+export const LOG_ROWS_PER_SCREEN = 6;
 export function glassRows(aircraft:Aircraft[]) {
  return sortAircraft(aircraft).flatMap((a,aircraftIndex)=>a.logs.map((log,logIndex)=>({a,log,aircraftIndex,logIndex})));
 }
@@ -64,20 +76,26 @@ export function glassOverview(aircraft:Aircraft[],date:string,selected:number,ti
   return `${entryIndex===index?'>':' '} ${prefix} | ${discrepancyMarquee(log.description,entryIndex===index?tick:0)}`;
  });
  const footer=entries.length?`${index+1}/${entries.length} logs | Tap: status`:'Add aircraft on your phone';
- return {index,start:visible[0]||0,rows,cells,title:'Super Platano Log',clock:displayClock(),footer,total:entries.length,pageIndex,pageCount:pages.length,text:[`Super Platano Log   ${displayClock()}`,'  '+['A/C'.padEnd(6),'ETA'.padEnd(5),'GATE','STATUS','Discrepancy'].join(' | '),...rows,footer].join('\n')};
+ return {arrowVisible:pageIndex<pages.length-1&&tick%2===0,hasMoreBelow:pageIndex<pages.length-1,index,start:visible[0]||0,rows,cells,title:'Super Platano Log',clock:displayClock(),footer,total:entries.length,pageIndex,pageCount:pages.length,text:[`Super Platano Log   ${displayClock()}`,'  '+['A/C'.padEnd(6),'ETA'.padEnd(5),'GATE','STATUS','Discrepancy'].join(' | '),...rows,footer].join('\n')};
 }
-export const ACTION_STATUSES = ['--','C/W','DEF','SUPP'] as const;
-// Conservative advances for the native proportional font; keep text within the
-// 282px column (border and padding leave 272px), including wide characters.
+export const ACTION_STATUSES = ['C/W','DEF','SUPP'] as const;
+// Measure with the G2 font metrics, including kerning, against the native
+// container's inner width. Character-class estimates either wrap or cut early.
+export const DISCREPANCY_WIDTH = 282;
+export const DISCREPANCY_PADDING = 1;
+export const DISCREPANCY_TEXT_WIDTH = DISCREPANCY_WIDTH - 2 * (2 + DISCREPANCY_PADDING);
 export function discrepancyMarquee(value:string,tick:number){
- const text=value.replace(/\s+/g,' ').trim();
- const advance=(c:string)=> /[ ilI.,:;!'|]/.test(c)?5:/[frt]/.test(c)?7:/[MWmw]/.test(c)?18:/[A-Z]/.test(c)?13:11;
- const fit=(start:number)=>{let end=start,width=0;while(end<text.length&&width+advance(text[end])<=272){width+=advance(text[end++]);}return end;};
- if(fit(0)===text.length)return text;
+ const text=Array.from(value.replace(/\s+/g,' ').trim());
+ const fit=(start:number)=>{
+  let end=start;
+  while(end<text.length&&getTextWidth(text.slice(start,end+1).join(''))<=DISCREPANCY_TEXT_WIDTH)end++;
+  return end;
+ };
+ if(fit(0)===text.length)return text.join('');
  let last=0;while(fit(last)<text.length)last++;
  const cycle=Math.ceil(last/2)+8,step=tick%cycle;
  const start=Math.min(last,Math.max(0,(step-4)*2));
- return text.slice(start,fit(start));
+ return text.slice(start,fit(start)).join('');
 }
 export function marquee(value:string,width:number,tick:number){
  const text=value.replace(/\s+/g,' ').trim();
@@ -86,9 +104,10 @@ export function marquee(value:string,width:number,tick:number){
  const offset=Math.min(travel,Math.max(0,(step-4)*2));
  return text.slice(offset,offset+width);
 }
-export function applyLogStatus(items:Aircraft[],aircraftId:string,logId:string,status:Status,now=new Date()):Aircraft[]{
- const time=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
- return items.map(a=>a.id!==aircraftId||!a.logs.some(l=>l.id===logId)?a:{...a,
-  ...((status==='PEND'||status==='--')?{}:{off:time,offRecordedAt:now.toISOString()}),
-  logs:a.logs.map(l=>l.id===logId?{...l,status}:l)});
+export function applyLogStatus(items:Aircraft[],aircraftId:string,logId:string,status:Status):Aircraft[]{
+ return items.map(a=>a.id!==aircraftId?a:{...a,logs:a.logs.map(l=>l.id===logId?{...l,status}:l)});
+}
+export function recordOffPlane(items:Aircraft[],aircraftId:string,now=new Date()):Aircraft[]{
+ const off=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+ return items.map(a=>a.id===aircraftId?{...a,off,offRecordedAt:now.toISOString()}:a);
 }
