@@ -11,3 +11,5 @@ previews
 test-results
 
 dist-companion
+
+!assets/*.png

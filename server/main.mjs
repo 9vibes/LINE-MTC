@@ -83,6 +83,11 @@ export function startServer(options={}){
      let next;try{next=validateData(b.aircraft);}catch(e){fail(400,e.message);}
      if(next.length>5000)fail(400,'Maximum 5000 aircraft');
      const keys=new Set();for(const a of next){const key=a.date+'|'+a.tail.toUpperCase();if(keys.has(key))fail(400,'Duplicate tail number on the same day');keys.add(key);if(a.logs.length>100)fail(400,'Maximum 100 logs per aircraft');}
+     // Older companion editors omit report fields; explicit null clears them.
+     for(const a of next)for(const l of a.logs){
+      const old=before.aircraft.find(x=>x.id===a.id)?.logs.find(x=>x.id===l.id);
+      for(const key of ['logType','healthPoints'])if(old&&!(key in l)&&key in old)l[key]=old[key];
+     }
      const now=new Date();
      for(const a of next)for(const l of a.logs){const old=before.aircraft.find(x=>x.id===a.id)?.logs.find(x=>x.id===l.id);const explicit=b.statusAction?.aircraftId===a.id&&b.statusAction?.logId===l.id;
       if((old?.status!==l.status||explicit)&&['C/W','DEF','SUPP'].includes(l.status))next=applyLogStatus(next,a.id,l.id,l.status,now);

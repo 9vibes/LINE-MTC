@@ -98,3 +98,11 @@ Server 1.0.9 removes the Add demo aircraft button from the operator website.
 Version 1.0.11 opens on the current local calendar date, returns to it when the app resumes, and rolls the view over at midnight. Older entries are retained and can be viewed with Shift date. An editor already open during rollover keeps its original shift date when saved.
 
 Companion 1.0.13 separates the selected log’s status and discrepancy with a vertical bar, for example `C/W | LT sun visor clip broken`.
+
+## Server 1.0.16: daily Excel report
+
+In the operator website, each discrepancy row has a Log type dropdown (NEF, MEL, OPEN) and a Health points input before the action/status selector. Changes save automatically when selected or when leaving the points field. Points support negative and decimal values; clearing an input leaves it blank. These fields do not change off-plane times. Older companion edits preserve report metadata.
+
+Print Report, next to Add aircraft, downloads `LINE-MTC-report-YYYY-MM-DD.xlsx` for the selected shift date, including all logs regardless of search or status filters. Open the workbook in Excel or another compatible spreadsheet application to print. It uses a navy date band, red headers, seven bordered columns, a minimum of 20 entry rows, wrapped descriptions, and landscape printing with repeated headers. Long reports continue onto additional pages. The Comments Def Reason column is blank for manual notes in the workbook. Existing records without type or points remain blank; the export does not infer them.
+
+Deploy the rebuilt server to make this feature available on the live website. No database migration is needed: optional metadata is stored in the existing log JSON. View-only accounts may download reports but cannot change report fields.

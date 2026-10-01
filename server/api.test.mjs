@@ -54,3 +54,26 @@ test('packaged companion uses bearer auth, CORS and live events without acceptin
   assert.equal((await request('/api/mobile/session','GET',null,token)).status,401);
  }finally{abort.abort();await app.close();rmSync(dir,{recursive:true,force:true});}
 });
+
+test('report metadata persists, validates, and survives legacy phone edits',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'line-mtc-report-'));
+ const app=startServer({port:0,dbPath:join(dir,'test.sqlite'),password,origin:'http://test.local'});await once(app.server,'listening');
+ const url=`http://127.0.0.1:${app.server.address().port}`;
+ let cookie='';const request=(path,method='GET',data)=>fetch(url+path,{method,headers:{Origin:'http://test.local','Content-Type':'application/json',Cookie:cookie},body:data?JSON.stringify(data):undefined});
+ try{
+  cookie=(await request('/api/login','POST',{username:'operator',password})).headers.get('set-cookie').split(';')[0];
+  let item=structuredClone(aircraft);item.logs[0].logType='MEL';item.logs[0].healthPoints=-.5;
+  let response=await request('/api/state','PUT',{revision:0,aircraft:[item]});assert.equal(response.status,200);
+  let state=await response.json();assert.equal(state.aircraft[0].off,'');
+  item=structuredClone(state.aircraft[0]);delete item.logs[0].logType;delete item.logs[0].healthPoints;item.logs[0].description='Edited by older phone';
+  state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).json();
+  assert.equal(state.aircraft[0].logs[0].logType,'MEL');assert.equal(state.aircraft[0].logs[0].healthPoints,-.5);
+  item=structuredClone(state.aircraft[0]);item.logs[0].logType='BAD';
+  assert.equal((await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).status,400);
+  item=structuredClone(state.aircraft[0]);item.logs[0].healthPoints='-3';
+  assert.equal((await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).status,400);
+  item=structuredClone(state.aircraft[0]);item.logs[0].healthPoints=null;item.logs[0].logType=null;
+  state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).json();
+  assert.equal(state.aircraft[0].logs[0].healthPoints,null);assert.equal(state.aircraft[0].logs[0].logType,null);
+ }finally{await app.close();rmSync(dir,{recursive:true,force:true});}
+});

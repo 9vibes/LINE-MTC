@@ -14,23 +14,35 @@
 
 .sign-in{max-width:440px;margin:8vh auto}.sign-in label,.accounts label{margin:18px 0}.account-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.accounts select{width:100%}
 
-.phone-companion .status.def,.phone-companion [data-action-status="DEF"],.phone-companion .tabs [data-filter="DEF"]{color:#b42318;background:#fee4e2;border-color:#fda29b}
-.phone-companion [data-action-status="DEF"]:hover,.phone-companion .tabs [data-filter="DEF"].active{color:#fff;background:#b42318;border-color:#b42318}
+.phone-companion .status.def,.phone-companion [data-action-status="DEF"]{color:#b42318;background:#fee4e2;border-color:#fda29b}
+.phone-companion [data-action-status="DEF"]:hover{color:#fff;background:#b42318;border-color:#b42318}
 
-.phone-companion .status.cw,.phone-companion [data-action-status="C/W"],.phone-companion .tabs [data-filter="C/W"]{color:#166534;background:#dcfce7;border-color:#86efac}
-.phone-companion [data-action-status="C/W"]:hover,.phone-companion .tabs [data-filter="C/W"].active{color:#fff;background:#166534;border-color:#166534}
+.phone-companion .status.cw,.phone-companion [data-action-status="C/W"]{color:#166534;background:#dcfce7;border-color:#86efac}
+.phone-companion [data-action-status="C/W"]:hover{color:#fff;background:#166534;border-color:#166534}
 
-.phone-companion .status.supp,.phone-companion [data-action-status="SUPP"],.phone-companion .tabs [data-filter="SUPP"]{color:#1d4ed8;background:#dbeafe;border-color:#93c5fd}
-.phone-companion [data-action-status="SUPP"]:hover,.phone-companion .tabs [data-filter="SUPP"].active{color:#fff;background:#1d4ed8;border-color:#1d4ed8}
+.phone-companion .status.supp,.phone-companion [data-action-status="SUPP"]{color:#1d4ed8;background:#dbeafe;border-color:#93c5fd}
+.phone-companion [data-action-status="SUPP"]:hover{color:#fff;background:#1d4ed8;border-color:#1d4ed8}
 
-.phone-companion .status.pend,.phone-companion [data-action-status="PEND"],.phone-companion .tabs [data-filter="PEND"]{color:#9a3412;background:#ffedd5;border-color:#fdba74}
-.phone-companion [data-action-status="PEND"]:hover,.phone-companion .tabs [data-filter="PEND"].active{color:#fff;background:#9a3412;border-color:#9a3412}
+.phone-companion .status.pend,.phone-companion [data-action-status="PEND"]{color:#9a3412;background:#ffedd5;border-color:#fdba74}
+.phone-companion [data-action-status="PEND"]:hover{color:#fff;background:#9a3412;border-color:#9a3412}
 
 .clear-aircraft{width:100%;margin-top:12px;color:#b42318;background:#fff5f5;border-color:#fda29b}.clear-aircraft:hover{background:#fee4e2}
 
 .operator-ui .workspace{grid-template-columns:minmax(0,1fr)}
-.operator-ui .log-number{color:inherit;font-weight:500;overflow-wrap:anywhere}
+.operator-ui .log-number,.phone-companion .log-number{color:inherit;font-weight:500;overflow-wrap:anywhere}
 
 .operator-ui footer>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .operator-ui footer .clear-aircraft{width:auto;margin:0 0 0 12px;padding:8px 12px;border:1px solid #fda29b;color:#b42318;background:#fff5f5;font-weight:650}
 .operator-ui footer .clear-aircraft:hover{background:#fee4e2}
+
+.heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.operator-ui .log-row{grid-template-columns:110px minmax(0,1fr) 112px 130px 90px;align-items:center}
+.operator-ui .log-row .log-type-field,.operator-ui .log-row .health-field,.operator-ui .log-row .log-status-field{font-size:11px;color:#6e7a69;min-width:0}
+.operator-ui .log-row .log-type-field select,.operator-ui .log-row .health-field input,.operator-ui .log-row .log-status-field select{width:100%;height:34px;margin-top:5px;padding:7px 8px;font-size:13px}
+.operator-ui .log-row .status{width:100%}
+@media(max-width:900px){.operator-ui .log-row{grid-template-columns:minmax(0,1fr) 112px 130px 90px;gap:12px}.operator-ui .log-row .log-number{grid-column:1/-1}.operator-ui .log-row p{grid-column:1;grid-row:auto}.operator-ui .log-row>select{grid-column:auto;grid-row:auto}}
+@media(max-width:600px){.operator-ui .log-row{grid-template-columns:1fr 1fr}.operator-ui .log-row p{grid-column:1/-1}.operator-ui .log-row>select{grid-column:2}.operator-ui .log-row .log-type-field select{grid-column:auto;grid-row:auto}}
+
+@media(max-width:600px){.operator-ui .log-row .log-status-field{grid-column:2}}
+
+.mark{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;padding:0;letter-spacing:0;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}

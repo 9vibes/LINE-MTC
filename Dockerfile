@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY src ./src
+COPY assets ./assets
 COPY server ./server
 COPY index.html tsconfig.json vite.config.ts ./
 RUN npm run build && npm run build:server

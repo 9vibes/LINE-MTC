@@ -1,5 +1,6 @@
 export type Status = 'C/W' | 'DEF' | 'PEND' | 'SUPP' | '--';
-export type Log = {id:string;number:string;description:string;status:Status};
+export type LogType = 'NEF' | 'MEL' | 'OPEN';
+export type Log = {id:string;number:string;description:string;status:Status;logType?:LogType|null;healthPoints?:number|null};
 export type Aircraft = {id:string;date:string;tail:string;eta:string;gate:string;off:string;offRecordedAt?:string;logs:Log[]};
 export function displayClock(now=new Date()) {
  const days=['Sun','Mon','Tues','Wed','Thurs','Fri','Sat'];
@@ -20,7 +21,10 @@ export function validateData(value:unknown):Aircraft[] {
   for(const time of [a.eta,a.off]) if(time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw Error('Invalid time.');
   if(!Array.isArray(a.logs)||!a.logs.length) throw Error('Each aircraft needs a log.');
   for(const l of a.logs){if(!l || typeof l.id!=='string' || ids.has(l.id)) throw Error('Invalid log ID.'); ids.add(l.id);
-   if(typeof l.number!=='string'||l.number.length>32||typeof l.description!=='string'||!l.description.trim()||l.description.length>240||!['C/W','DEF','PEND','SUPP','--'].includes(l.status)) throw Error('Invalid log details.');}
+   if(typeof l.number!=='string'||l.number.length>32||typeof l.description!=='string'||!l.description.trim()||l.description.length>240||!['C/W','DEF','PEND','SUPP','--'].includes(l.status)) throw Error('Invalid log details.');
+   if(l.logType!=null&&!['NEF','MEL','OPEN'].includes(l.logType)) throw Error('Invalid log type.');
+   if(l.healthPoints!=null&&(typeof l.healthPoints!=='number'||!Number.isFinite(l.healthPoints))) throw Error('Invalid health points.');
+  }
  }
  return value;
 }
@@ -61,7 +65,7 @@ export function glassOverview(aircraft:Aircraft[],date:string,selected:number,ti
  const footer=entries.length?`${index+1}/${entries.length} logs | Tap: status`:'Add aircraft on your phone';
  return {index,start:visible[0]||0,rows,cells,title:'Super Platano Log',clock:displayClock(),footer,total:entries.length,pageIndex,pageCount:pages.length,text:[`Super Platano Log   ${displayClock()}`,'  '+['A/C'.padEnd(6),'ETA'.padEnd(5),'GATE','STATUS','Discrepancy'].join(' | '),...rows,footer].join('\n')};
 }
-export const ACTION_STATUSES = ['C/W','DEF','SUPP','--'] as const;
+export const ACTION_STATUSES = ['--','C/W','DEF','SUPP'] as const;
 // Conservative advances for the native proportional font; keep text within the
 // 282px column (border and padding leave 272px), including wide characters.
 export function discrepancyMarquee(value:string,tick:number){
