@@ -38,7 +38,7 @@ test('operator report fields persist through edit, export ignores filter, and em
  expect(state.aircraft[0].off).toBe('');
  await page.reload();await expect(page.getByLabel('Health points for log 01839400',{exact:true})).toHaveValue('-0.5');
  await page.getByRole('button',{name:'Edit aircraft 08337'}).click();await page.getByRole('button',{name:'Save aircraft',exact:true}).click();
- await expect(page.locator('#editor')).not.toBeVisible();expect(state.aircraft[0].logs[0].logType).toBe('NEF');expect(state.aircraft[0].logs[0].healthPoints).toBe(-.5);
+ await expect(page.locator('#editor')).not.toBeVisible();expect(state.aircraft[0].logs[0].status).toBe('C/W');expect(state.aircraft[0].logs[0].logType).toBe('NEF');expect(state.aircraft[0].logs[0].healthPoints).toBe(-.5);
  await page.screenshot({path:testInfo.outputPath('report-controls.png'),fullPage:true});
  await page.locator('[data-filter="C/W"]').click();await expect(page.locator('.log-row')).toHaveCount(1);
  const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Print Report',exact:true}).click();const download=await downloaded;

@@ -106,3 +106,9 @@ In the operator website, each discrepancy row has a Log type dropdown (NEF, MEL,
 Print Report, next to Add aircraft, downloads `LINE-MTC-report-YYYY-MM-DD.xlsx` for the selected shift date, including all logs regardless of search or status filters. Open the workbook in Excel or another compatible spreadsheet application to print. It uses a navy date band, red headers, seven bordered columns, a minimum of 20 entry rows, wrapped descriptions, and landscape printing with repeated headers. Long reports continue onto additional pages. The Comments Def Reason column is blank for manual notes in the workbook. Existing records without type or points remain blank; the export does not infer them.
 
 Deploy the rebuilt server to make this feature available on the live website. No database migration is needed: optional metadata is stored in the existing log JSON. View-only accounts may download reports but cannot change report fields.
+
+## Version 1.0.17
+
+The server aircraft cards show ETD beside ETA, and the editor places Departure time below Arrival time. ETD accepts 24-hour time, remains optional, and is preserved when older phone clients save aircraft. The server editor no longer offers off-plane time or log status controls; saved values are preserved, and aircraft-card status controls remain available.
+
+The installed companion removes Clear this day's aircraft and the SHARED header suffix, displays the banana and SUPER PLATANO A/C ROUTING branding, and uses SUPER PLATANO A/C as the Even Hub app-list name to fit its 20-character limit. Off-plane time remains available in the phone editor.

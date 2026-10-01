@@ -1,7 +1,7 @@
 export type Status = 'C/W' | 'DEF' | 'PEND' | 'SUPP' | '--';
 export type LogType = 'NEF' | 'MEL' | 'OPEN';
 export type Log = {id:string;number:string;description:string;status:Status;logType?:LogType|null;healthPoints?:number|null};
-export type Aircraft = {id:string;date:string;tail:string;eta:string;gate:string;off:string;offRecordedAt?:string;logs:Log[]};
+export type Aircraft = {id:string;date:string;tail:string;eta:string;etd?:string;gate:string;off:string;offRecordedAt?:string;logs:Log[]};
 export function displayClock(now=new Date()) {
  const days=['Sun','Mon','Tues','Wed','Thurs','Fri','Sat'];
  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'];
@@ -18,7 +18,8 @@ export function validateData(value:unknown):Aircraft[] {
   if(!a || typeof a.id!=='string' || ids.has(a.id)) throw Error('Invalid or duplicate aircraft ID.'); ids.add(a.id);
   for(const k of ['date','tail','eta','gate','off']) if(typeof a[k]!=='string') throw Error('Invalid aircraft fields.');
   if(!/^\d{4}-\d{2}-\d{2}$/.test(a.date) || !a.tail.trim() || a.tail.length>16 || a.gate.length>12) throw Error('Invalid aircraft details.');
-  for(const time of [a.eta,a.off]) if(time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw Error('Invalid time.');
+  if(a.etd!==undefined&&typeof a.etd!=='string') throw Error('Invalid departure time.');
+  for(const time of [a.eta,a.etd,a.off]) if(time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw Error('Invalid time.');
   if(!Array.isArray(a.logs)||!a.logs.length) throw Error('Each aircraft needs a log.');
   for(const l of a.logs){if(!l || typeof l.id!=='string' || ids.has(l.id)) throw Error('Invalid log ID.'); ids.add(l.id);
    if(typeof l.number!=='string'||l.number.length>32||typeof l.description!=='string'||!l.description.trim()||l.description.length>240||!['C/W','DEF','PEND','SUPP','--'].includes(l.status)) throw Error('Invalid log details.');

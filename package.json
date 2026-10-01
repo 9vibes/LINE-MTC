@@ -1,13 +1,13 @@
 {
   "name": "line-mtc",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Shared aircraft running log and Even G2 companion",
   "main": "index.js",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "test": "playwright test",
-    "pack": "npm run build:companion && evenhub pack app.json dist-companion --sdk-ver 0.0.16 -o line-mtc-1.0.16.ehpk",
+    "pack": "npm run build:companion && evenhub pack app.json dist-companion --sdk-ver 0.0.16 -o line-mtc-1.0.17.ehpk",
     "simulator": "node node_modules/@evenrealities/evenhub-simulator/bin/index.js http://localhost:5173 --automation-port 9898",
     "build:server": "tsc -p server/tsconfig.json && cp server/main.mjs server/store.mjs server/init-data.mjs server-build/",
     "start": "node server-build/main.mjs",

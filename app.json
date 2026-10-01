@@ -1,8 +1,8 @@
 {
   "package_id": "com.platoon.runninglog",
   "edition": "202601",
-  "name": "Super Platano Log",
-  "version": "1.0.16",
+  "name": "SUPER PLATANO A/C",
+  "version": "1.0.17",
   "min_sdk_version": "0.0.16",
   "entrypoint": "index.html",
   "permissions": [

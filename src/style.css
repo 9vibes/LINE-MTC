@@ -46,3 +46,15 @@
 @media(max-width:600px){.operator-ui .log-row .log-status-field{grid-column:2}}
 
 .mark{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;padding:0;letter-spacing:0;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji",sans-serif}
+
+.phone-companion header{gap:12px}
+.phone-companion .brand{min-width:0;gap:10px;letter-spacing:1px}
+.phone-companion .mark{flex-shrink:0}
+.phone-companion .local{white-space:nowrap;flex-shrink:0}
+@media(max-width:760px){.phone-companion .brand{font-size:14px}.phone-companion .mark{width:38px;height:38px}.phone-companion .brand small{letter-spacing:1.5px}}
+
+@media(max-width:600px){.operator-ui .aircraft-head{flex-wrap:wrap}.operator-ui .aircraft-head .tail{flex-basis:100%}}
+
+.fields>label[hidden]{display:none}
+
+.operator-ui #form>.fields>.departure-editor-field{grid-column:2;grid-row:2}

@@ -83,6 +83,8 @@ export function startServer(options={}){
      let next;try{next=validateData(b.aircraft);}catch(e){fail(400,e.message);}
      if(next.length>5000)fail(400,'Maximum 5000 aircraft');
      const keys=new Set();for(const a of next){const key=a.date+'|'+a.tail.toUpperCase();if(keys.has(key))fail(400,'Duplicate tail number on the same day');keys.add(key);if(a.logs.length>100)fail(400,'Maximum 100 logs per aircraft');}
+     // Preserve ETD when an older companion does not send the optional field.
+     for(const a of next){const old=before.aircraft.find(x=>x.id===a.id);if(old&&!('etd' in a)&&'etd' in old)a.etd=old.etd;}
      // Older companion editors omit report fields; explicit null clears them.
      for(const a of next)for(const l of a.logs){
       const old=before.aircraft.find(x=>x.id===a.id)?.logs.find(x=>x.id===l.id);
