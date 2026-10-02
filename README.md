@@ -120,3 +120,7 @@ On narrow phone screens, the server keeps ETA, ETD and Gate beside the aircraft 
 ## Server 1.0.20 / companion 1.0.35
 
 Glasses use measured G2 font widths for scrolling discrepancies and show six log rows, a small blinking continuation arrow behind aircraft text, and both clock formats. The selected aircraft view shows ETD, a centered T- interval calculated as ETD minus ETA (including overnight turns), and off-plane time on the right. Log type appears beside the log number. LOG TIME OFF PLANE replaces the unset-status menu action; C/W, DEF and SUPP no longer record off-plane time. Update the server and companion together for this behavior. Existing data is preserved.
+
+## Server 1.0.21 / companion 1.0.37
+
+LOG TIME OFF PLANE records time and sets every log on that aircraft to PEND. Status changes preserve recorded time even for legacy clients that omit the action marker. The phone checks server compatibility before status actions and shows blocked saves on both the phone and glasses. Install both updates; the store publication alone does not upgrade the running Umbrel app.

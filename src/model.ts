@@ -109,5 +109,5 @@ export function applyLogStatus(items:Aircraft[],aircraftId:string,logId:string,s
 }
 export function recordOffPlane(items:Aircraft[],aircraftId:string,now=new Date()):Aircraft[]{
  const off=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
- return items.map(a=>a.id===aircraftId?{...a,off,offRecordedAt:now.toISOString()}:a);
+ return items.map(a=>a.id===aircraftId?{...a,off,offRecordedAt:now.toISOString(),logs:a.logs.map(l=>({...l,status:'PEND' as const}))}:a);
 }

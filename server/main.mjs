@@ -36,7 +36,7 @@ export function startServer(options={}){
   }
   try{
    if(path==='/api/health')return json(res,200,{name:'LINE MTC',ok:true});
-   if(path==='/api/config')return json(res,200,{mode:'shared',name:'LINE MTC'});
+   if(path==='/api/config')return json(res,200,{mode:'shared',name:'LINE MTC',statusPreservesOffPlane:true,offPlaneResetsLogs:true});
    if(!['GET','HEAD'].includes(req.method)){
     if(!req.mobile&&!allowedOrigins.has(req.headers.origin))fail(403,'Unrecognized request origin');
     if(!String(req.headers['content-type']).startsWith('application/json'))fail(415,'JSON required');
@@ -91,15 +91,22 @@ export function startServer(options={}){
       for(const key of ['logType','healthPoints'])if(old&&!(key in l)&&key in old)l[key]=old[key];
      }
      const now=new Date();
-     if(b.statusAction?.recordOffPlane){
+     const recording=b.statusAction?.recordOffPlane===true;
+     // Enforce status/time separation even when a legacy editor omits statusAction.
+     for(const target of next){
+      const previous=before.aircraft.find(a=>a.id===target.id);
+      if(!previous)continue;
+      const statusChanged=target.logs.some(l=>previous.logs.find(old=>old.id===l.id)?.status!==l.status);
+      const statusSelected=b.statusAction?.aircraftId===target.id;
+      if(statusChanged||statusSelected){
+       target.off=previous.off;
+       if(previous.offRecordedAt)target.offRecordedAt=previous.offRecordedAt;else delete target.offRecordedAt;
+      }
+     }
+     if(recording){
       const target=next.find(a=>a.id===b.statusAction.aircraftId&&a.logs.some(l=>l.id===b.statusAction.logId));
       if(!target)fail(400,'Aircraft or log no longer exists');
       next=recordOffPlane(next,target.id,now);
-     }else if(b.statusAction){
-      // A status change must never record time, including older phone clients.
-      const previous=before.aircraft.find(a=>a.id===b.statusAction.aircraftId);
-      const target=next.find(a=>a.id===b.statusAction.aircraftId);
-      if(previous&&target){target.off=previous.off;if(previous.offRecordedAt)target.offRecordedAt=previous.offRecordedAt;else delete target.offRecordedAt;}
      }
      db.exec('BEGIN IMMEDIATE');try{db.prepare('UPDATE state SET revision=?,aircraft=?,updated_at=?,updated_by=? WHERE id=1').run(before.revision+1,JSON.stringify(next),now.toISOString(),user.username);db.prepare('INSERT INTO audit(revision,username,at,action) VALUES(?,?,?,?)').run(before.revision+1,user.username,now.toISOString(),b.statusAction?.recordOffPlane?'off-plane':b.statusAction?'status':'edit');db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
      broadcast();return json(res,200,snapshot());

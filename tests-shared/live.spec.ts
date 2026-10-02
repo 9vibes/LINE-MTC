@@ -31,7 +31,7 @@ for(const packaged of [false,true])test((packaged?'packaged companion: ':'websit
  if(packaged)await expect(b.locator('#hud')).toContainText('LOG NUMBER: 1234567 | MEL');
  await b.getByRole('button',{name:'LOG TIME OFF PLANE',exact:true}).click();
  await expect(a.locator('.aircraft-foot')).toContainText('Off plane');
- await expect(b.getByLabel('Status for log 1234567')).toHaveValue('C/W');
+ await expect(b.getByLabel('Status for log 1234567')).toHaveValue('PEND');
  const offBefore=(await (await a.request.get('/api/state')).json()).aircraft[0].offRecordedAt;
  await b.getByRole('button',{name:'Open status menu',exact:true}).click();await b.locator('[data-action-status="DEF"]').click();
  await expect(a.getByLabel('Status for log 1234567')).toHaveValue('DEF');

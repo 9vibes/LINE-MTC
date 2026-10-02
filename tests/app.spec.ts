@@ -2,7 +2,7 @@ import {getTextWidth,measureTextWrap} from '@evenrealities/pretext';
 import {DISCREPANCY_TEXT_WIDTH,departureHeader} from '../src/model';
 import {Glasses,displayContainers} from '../src/glasses';
 import {test,expect} from '@playwright/test';
-import {sortAircraft,glassPages,validateData,glassOverview,aircraftStatus,displayClock,marquee,discrepancyMarquee,applyLogStatus} from '../src/model';
+import {sortAircraft,glassPages,validateData,glassOverview,aircraftStatus,displayClock,marquee,discrepancyMarquee,applyLogStatus,recordOffPlane} from '../src/model';
 test.beforeEach(async({page})=>{await page.addInitScript(()=>localStorage.setItem('super-platano-demo-initialized-v1','1'));});
 test('ETA sorting keeps unknown last and preserves multiple logs',()=>{
  const a=(tail:string,eta:string)=>({id:tail,date:'2026-09-29',tail,eta,gate:'88A',off:'',logs:[{id:tail+'l',number:'001',description:'Test',status:'PEND' as const}]});
@@ -89,10 +89,10 @@ test('glasses off-plane action stamps time independently of status and survives 
  await page.getByRole('button',{name:'Open status menu',exact:true}).click();
  await page.getByRole('button',{name:'LOG TIME OFF PLANE',exact:true}).click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('platoon-running-log-v1')!));
- expect(saved[0].logs[1].status).toBe('SUPP');
+ expect(saved[0].logs.every((l:any)=>l.status==='PEND')).toBe(true);
  expect(saved[0].offRecordedAt).toBe('2026-09-29T20:25:00.000Z');
  expect(saved[0].off).toMatch(/^\d{2}:\d{2}$/);
- await page.reload();await expect(page.getByLabel('Status for log 1828904')).toHaveValue('SUPP');
+ await page.reload();await expect(page.getByLabel('Status for log 1828904')).toHaveValue('PEND');
  await expect(page.locator('.aircraft').first()).toContainText('Off plane '+saved[0].off);
  await page.getByRole('button',{name:'Open status menu',exact:true}).click();
  await page.getByRole('button',{name:'← All aircraft',exact:true}).click();
@@ -250,4 +250,34 @@ test('arrow blinks with unchanged log text without rebuilding the page',async()=
  glasses.send('same text',{...grid,arrowVisible:false});
  await expect.poll(()=>images.length).toBe(2);
  expect(images[0]).not.toEqual(images[1]);expect(creates).toBe(1);expect(rebuilds).toBe(0);
+});
+
+test('logging off plane resets all and only that aircraft logs; statuses never stamp time',()=>{
+ const aircraft:import('../src/model').Aircraft={id:'a',tail:'8337',date:'2026-10-01',eta:'13:00',gate:'93',off:'',logs:['C/W','DEF','SUPP'].map((status,i)=>({id:String(i),number:String(i),description:'Test',status:status as import('../src/model').Status}))};
+ const other={...aircraft,id:'b',logs:aircraft.logs.map(l=>({...l,id:'b'+l.id}))};
+ const logged=recordOffPlane([aircraft,other],'a',new Date(2026,9,1,13,20));
+ expect(logged[0].logs.map(l=>l.status)).toEqual(['PEND','PEND','PEND']);expect(logged[0].off).toBe('13:20');expect(logged[1]).toEqual(other);
+ for(const status of ['C/W','DEF','SUPP'] as const){
+  const next=applyLogStatus(logged,'a','0',status);
+  expect(next[0].off).toBe(logged[0].off);expect(next[0].offRecordedAt).toBe(logged[0].offRecordedAt);
+  expect(next[0].logs.map(l=>l.status)).toEqual([status,'PEND','PEND']);
+  expect(applyLogStatus([aircraft],'a','0',status)[0].off).toBe('');
+ }
+});
+
+test('legacy servers cannot receive a status update that could stamp off-plane time',async({page})=>{
+ let writes=0;
+ await page.clock.setFixedTime(new Date(2026,9,1,13,0));
+ const state={revision:1,aircraft:[{id:'legacy-aircraft',date:'2026-10-01',tail:'8337',eta:'13:00',gate:'93',off:'12:55',logs:[{id:'legacy-log',number:'123',description:'Test',status:'PEND'}]}]};
+ await page.route('**/api/**',async route=>{
+  const path=new URL(route.request().url()).pathname;
+  if(route.request().method()==='PUT')writes++;
+  if(path.endsWith('/events')){await route.fulfill({contentType:'text/event-stream',body:`event: snapshot\ndata: ${JSON.stringify(state)}\n\n`});return;}
+  await route.fulfill({contentType:'application/json',body:JSON.stringify(path.endsWith('/config')?{mode:'shared'}:path.endsWith('/session')?{user:{username:'tech',role:'editor'}}:state)});
+ });
+ await page.goto('/companion');await page.getByRole('button',{name:'Open status menu',exact:true}).click();
+ await page.locator('[data-action-status="C/W"]').click();
+ await expect(page.locator('#notice')).toContainText('Status not saved');
+ await expect(page.locator('#hud')).toContainText('NOT SAVED: Update Umbrel to 1.0.21');
+ expect(writes).toBe(0);await expect(page.getByLabel('Status for log 123')).toHaveValue('PEND');
 });

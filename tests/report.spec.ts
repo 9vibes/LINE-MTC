@@ -29,7 +29,7 @@ test('operator report fields persist through edit, export ignores filter, and em
   const path=new URL(route.request().url()).pathname.split('/').pop();
   if(route.request().method()==='PUT'){state={revision:state.revision+1,aircraft:route.request().postDataJSON().aircraft};}
   if(path==='events'){await route.fulfill({contentType:'text/event-stream',body:`event: snapshot\ndata: ${JSON.stringify(state)}\n\n`});return;}
-  await route.fulfill({contentType:'application/json',body:JSON.stringify(path==='config'?{mode:'shared'}:path==='session'?{user:{username:'operator',role:'operator'}}:state)});
+  await route.fulfill({contentType:'application/json',body:JSON.stringify(path==='config'?{mode:'shared',statusPreservesOffPlane:true}:path==='session'?{user:{username:'operator',role:'operator'}}:state)});
  });
  await page.setViewportSize({width:1440,height:1000});await page.goto('/operator');
  await expect(page.locator('#aircraft select[data-log-type]')).toHaveCount(0);

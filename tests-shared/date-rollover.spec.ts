@@ -8,7 +8,7 @@ for(const packaged of [false,true])test(`${packaged?'phone':'website'} defaults 
   const path=route.request().url().split('/').pop();
   if(path==='state'&&route.request().method()==='PUT'){const body=route.request().postDataJSON();state={...state,revision:state.revision+1,aircraft:body.aircraft};}
   if(path==='events'){await route.fulfill({contentType:'text/event-stream',body:`event: snapshot\ndata: ${JSON.stringify(state)}\n\n`});return;}
-  await route.fulfill({contentType:'application/json',body:JSON.stringify(path==='config'?{mode:'shared'}:path==='session'?{user:{username:'tester',role:'editor'}}:state)});
+  await route.fulfill({contentType:'application/json',body:JSON.stringify(path==='config'?{mode:'shared',statusPreservesOffPlane:true}:path==='session'?{user:{username:'tester',role:'editor'}}:state)});
  });
  await page.goto(packaged?'http://127.0.0.1:3078/':'/');
  await expect(page.locator('#date')).toHaveValue('2026-09-29');await expect(page.locator('.tail h2')).toHaveText(['2222']);

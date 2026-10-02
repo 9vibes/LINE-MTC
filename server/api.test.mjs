@@ -76,15 +76,21 @@ test('report metadata persists, validates, and survives legacy phone edits',asyn
   state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).json();
   assert.equal(state.aircraft[0].logs[0].healthPoints,null);assert.equal(state.aircraft[0].logs[0].logType,null);
   const action={aircraftId:item.id,logId:item.logs[0].id,recordOffPlane:true};
-  const previousStatus=state.aircraft[0].logs[0].status;
+  state.aircraft[0].logs.push({...state.aircraft[0].logs[0],id:'extra-log',status:'DEF'});
   state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:state.aircraft,statusAction:action})).json();
   assert.match(state.aircraft[0].off,/^\d\d:\d\d$/);assert.ok(state.aircraft[0].offRecordedAt);
-  assert.equal(state.aircraft[0].logs[0].status,previousStatus);
+  assert.deepEqual(state.aircraft[0].logs.map(l=>l.status),['PEND','PEND']);
   const off=state.aircraft[0].off,recorded=state.aircraft[0].offRecordedAt;
+  assert.equal((await (await request('/api/config')).json()).statusPreservesOffPlane,true);
   for(const status of ['C/W','DEF','SUPP']){
    item=structuredClone(state.aircraft[0]);item.logs[0].status=status;item.off='00:00';item.offRecordedAt='old-client-stamp';
    state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item],statusAction:{aircraftId:item.id,logId:item.logs[0].id}})).json();
    assert.equal(state.aircraft[0].off,off);assert.equal(state.aircraft[0].offRecordedAt,recorded);assert.equal(state.aircraft[0].logs[0].status,status);
+  }
+  for(const status of ['C/W','DEF','SUPP']){
+   item=structuredClone(state.aircraft[0]);item.logs[0].status=status;item.off='00:00';item.offRecordedAt='legacy-editor-stamp';
+   state=await (await request('/api/state','PUT',{revision:state.revision,aircraft:[item]})).json();
+   assert.equal(state.aircraft[0].off,off);assert.equal(state.aircraft[0].offRecordedAt,recorded);
   }
  }finally{await app.close();rmSync(dir,{recursive:true,force:true});}
 });

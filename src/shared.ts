@@ -61,7 +61,12 @@ export class SharedSession {
  async save(aircraft:Aircraft[],revision=this.revision,statusAction?:{aircraftId:string;logId:string;recordOffPlane?:boolean}){
   if(this.pending)throw Error('A save is already in progress. Please try again after it finishes.');
   this.pending=true;this.onStatus?.('Saving to LINE MTC…');
-  try{const result=await this.request('/api/state',{method:'PUT',body:JSON.stringify({revision,aircraft,statusAction})});this.accept(result);this.onStatus?.('Saved · shared with your team');return result as Snapshot;}
+  try{
+   if(statusAction){
+    const config=await this.request('/api/config');
+    if(config.statusPreservesOffPlane!==true||(statusAction.recordOffPlane&&config.offPlaneResetsLogs!==true))throw Error('Status not saved. Update LINE MTC in Umbrel to v1.0.21 or later and restart it. This server may change off-plane time when saving a status.');
+   }
+   const result=await this.request('/api/state',{method:'PUT',body:JSON.stringify({revision,aircraft,statusAction})});this.accept(result);this.onStatus?.('Saved · shared with your team');return result as Snapshot;}
   catch(e){const error=e as Error&{status?:number;snapshot?:Snapshot};if(error.status===409&&error.snapshot)this.accept(error.snapshot);this.onStatus?.('Not saved · '+error.message);throw e;}finally{this.pending=false;}
  }
  async logout(){await this.request('/api/logout',{method:'POST',body:'{}'});this.source?.close();if(remote)await this.remember('');location.reload();}
